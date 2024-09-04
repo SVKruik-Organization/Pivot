@@ -1,0 +1,29 @@
+{
+  "name": "sk-pivot",
+  "description": "SK Pivot",
+  "version": "1.0.0",
+  "author": "Stefan Kruik",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SVKruik-Organization/Pivot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SVKruik-Organization/Pivot/issues"
+  },
+  "homepage": "https://github.com/SVKruik-Organization/Pivot#readme",
+  "scripts": {
+    "build": "npx tsc",
+    "dev": "nodemon src/server.ts",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
