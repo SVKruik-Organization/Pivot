@@ -12,7 +12,7 @@ echo "Git setup complete"
 npm install
 npm run build
 [ -d logs ] || mkdir logs
-[ -d data ] || mkdir data && touch data/routes.json && echo '{}' >data/routes.json
+[ -d data ] || (mkdir data && touch data/routes.json && echo '{}' >data/routes.json)
 echo "Pivot update complete. Reloading server."
 
 sudo systemctl restart pivot-api.service

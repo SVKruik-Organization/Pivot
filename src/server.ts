@@ -79,6 +79,12 @@ fastify.delete("/d/:target", (request: FastifyRequest, reply: FastifyReply): Fas
 fastify.get("*", (_request: FastifyRequest, reply: FastifyReply): FastifyReply => {
     return reply.send("SK Pivot API");
 });
+fastify.post("*", (_request: FastifyRequest, reply: FastifyReply): FastifyReply => {
+    return reply.send("SK Pivot API");
+});
+fastify.delete("*", (_request: FastifyRequest, reply: FastifyReply): FastifyReply => {
+    return reply.send("SK Pivot API");
+});
 
 // Start
 fastify.listen({ port: parseInt(process.env.REST_PORT as string) })
