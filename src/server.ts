@@ -23,6 +23,19 @@ function isValidUrl(url: string): boolean {
     }
 }
 
+/**
+ * Check if the request is authorized.
+ * @param request The incoming request.
+ * @param reply The downstream reply.
+ * @param done Send the request downstream.
+ * @returns Reply on unauthorized or void for downstream.
+ */
+function isAuthorized(request: FastifyRequest, reply: FastifyReply, done: HookHandlerDoneFunction): FastifyReply | void {
+    if (request.headers["authorization"] === `Bearer ${process.env.REST_AUTH_TOKEN}`) {
+        return done();
+    } else return reply.status(401).send("Unauthorized");
+}
+
 // Logging
 fastify.addHook("preHandler", (request: FastifyRequest, _reply: FastifyReply, done: HookHandlerDoneFunction) => {
     log(`API Request || Agent: ${request.headers["user-agent"]} || ${request.method} ${request.url}`, "info");
@@ -39,15 +52,13 @@ fastify.get("/r/:target/:hash?", (request: FastifyRequest, reply: FastifyReply):
 });
 
 // Read All Routes
-fastify.get("/r", (request: FastifyRequest, reply: FastifyReply): FastifyReply => {
-    if (request.headers["authorization"] !== `Bearer ${process.env.REST_AUTH_TOKEN}`) return reply.status(401).send();
+fastify.get("/r", { preHandler: isAuthorized }, (_request: FastifyRequest, reply: FastifyReply): FastifyReply => {
     return reply.send(routes);
 });
 
 // New Route
-fastify.post("/w", (request: FastifyRequest, reply: FastifyReply): FastifyReply => {
+fastify.post("/w", { preHandler: isAuthorized }, (request: FastifyRequest, reply: FastifyReply): FastifyReply => {
     // Validation
-    if (request.headers["authorization"] !== `Bearer ${process.env.REST_AUTH_TOKEN}`) return reply.status(401).send("Missing Bearer token.");
     const payload = request.body as { name: string, value: string };
     if (!payload.name || !payload.value || !payload.value.length || !payload.value.length) return reply.status(400).send("Invalid payload provided.");
     if (routes[payload.name]) return reply.status(409).send("Route already exists.");
@@ -63,10 +74,12 @@ fastify.post("/w", (request: FastifyRequest, reply: FastifyReply): FastifyReply 
 });
 
 // Delete Route
-fastify.delete("/d/:target", (request: FastifyRequest, reply: FastifyReply): FastifyReply => {
-    if (request.headers["authorization"] !== `Bearer ${process.env.REST_AUTH_TOKEN}`) return reply.status(401).send("Missing Bearer token.");
+fastify.delete("/d/:target", { preHandler: isAuthorized }, (request: FastifyRequest, reply: FastifyReply): FastifyReply => {
+    // Validation
     const target = request.params as { target: string };
     if (!routes[target.target]) return reply.status(404).send("Route not found.");
+
+    // Write
     delete routes[target.target];
     writeFileSync(process.env.REST_DATA_LOCATION as string, JSON.stringify(routes, null, 4), {
         "encoding": "utf-8",
