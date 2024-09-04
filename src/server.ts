@@ -30,22 +30,22 @@ fastify.addHook("preHandler", (request: FastifyRequest, _reply: FastifyReply, do
 });
 
 // Read Route
-fastify.get("/r/:target/:hash?", async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+fastify.get("/r/:target/:hash?", (request: FastifyRequest, reply: FastifyReply): FastifyReply => {
     const params = request.params as { target: string, hash: string | undefined };
     const targetUrl: string | undefined = routes[params.target];
     if (targetUrl) {
-        reply.status(301).redirect(targetUrl + (params.hash ? `#${params.hash}` : ""));
-    } else reply.status(404).send("Route not found.");
+        return reply.status(301).redirect(targetUrl + (params.hash ? `#${params.hash}` : ""));
+    } else return reply.status(404).send("Route not found.");
 });
 
 // Read All Routes
-fastify.get("/r", async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+fastify.get("/r", (request: FastifyRequest, reply: FastifyReply): FastifyReply => {
     if (request.headers["authorization"] !== `Bearer ${process.env.REST_AUTH_TOKEN}`) return reply.status(401).send();
     return reply.send(routes);
 });
 
 // New Route
-fastify.post("/w", async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+fastify.post("/w", (request: FastifyRequest, reply: FastifyReply): FastifyReply => {
     // Validation
     if (request.headers["authorization"] !== `Bearer ${process.env.REST_AUTH_TOKEN}`) return reply.status(401).send("Missing Bearer token.");
     const payload = request.body as { name: string, value: string };
@@ -59,11 +59,11 @@ fastify.post("/w", async (request: FastifyRequest, reply: FastifyReply): Promise
         "encoding": "utf-8",
         "flag": "w"
     });
-    reply.send();
+    return reply.send();
 });
 
 // Delete Route
-fastify.delete("/d/:target", async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+fastify.delete("/d/:target", (request: FastifyRequest, reply: FastifyReply): FastifyReply => {
     if (request.headers["authorization"] !== `Bearer ${process.env.REST_AUTH_TOKEN}`) return reply.status(401).send("Missing Bearer token.");
     const target = request.params as { target: string };
     if (!routes[target.target]) return reply.status(404).send("Route not found.");
@@ -72,7 +72,12 @@ fastify.delete("/d/:target", async (request: FastifyRequest, reply: FastifyReply
         "encoding": "utf-8",
         "flag": "w"
     });
-    reply.send();
+    return reply.send();
+});
+
+// Catch All
+fastify.get("*", (_request: FastifyRequest, reply: FastifyReply): FastifyReply => {
+    return reply.send("SK Pivot API");
 });
 
 // Start
