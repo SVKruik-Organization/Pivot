@@ -8,7 +8,7 @@ git reset --hard
 git pull
 echo "Git setup complete"
 
-# Pivot - url.skpvt.io
+# Pivot - skpvt.io
 npm install
 npm run build
 [ -d logs ] || mkdir logs
