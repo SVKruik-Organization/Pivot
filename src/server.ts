@@ -1,13 +1,17 @@
 import Fastify, { FastifyReply, FastifyRequest, HookHandlerDoneFunction } from 'fastify';
 import dotenv from "dotenv";
-import { log } from './utils/logger';
 import { readFileSync, writeFileSync } from 'fs';
+import { logData, logError } from '@svkruik/sk-platform-formatters';
 dotenv.config();
+if (!process.env.REST_PORT || !process.env.REST_DATA_LOCATION || !process.env.REST_AUTH_TOKEN) {
+    logError("Missing configuration in environment variables.");
+    process.exit(1);
+}
 const fastify = Fastify();
 
 // Import routes on startup.
 // Keep in-memory for performance.
-const routes = JSON.parse(readFileSync(process.env.REST_DATA_LOCATION as string, "utf-8"));
+const routes = JSON.parse(readFileSync(process.env.REST_DATA_LOCATION, "utf-8"));
 
 /**
  * Check if a string is a valid URL.
@@ -38,7 +42,7 @@ function isAuthorized(request: FastifyRequest, reply: FastifyReply, done: HookHa
 
 // Logging
 fastify.addHook("preHandler", (request: FastifyRequest, _reply: FastifyReply, done: HookHandlerDoneFunction) => {
-    log(`API Request || Agent: ${request.headers["user-agent"]} || ${request.method} ${request.url}`, "info");
+    logData(`API Request || Agent: ${request.headers["user-agent"]} || ${request.method} ${request.url}`, "info");
     done();
 });
 
@@ -66,7 +70,7 @@ fastify.post("/w", { preHandler: isAuthorized }, (request: FastifyRequest, reply
 
     // Write
     routes[payload.name] = payload.value;
-    writeFileSync(process.env.REST_DATA_LOCATION as string, JSON.stringify(routes, null, 4), {
+    writeFileSync(process.env.REST_DATA_LOCATION!, JSON.stringify(routes, null, 4), {
         "encoding": "utf-8",
         "flag": "w"
     });
@@ -81,7 +85,7 @@ fastify.delete("/d/:target", { preHandler: isAuthorized }, (request: FastifyRequ
 
     // Write
     delete routes[target.target];
-    writeFileSync(process.env.REST_DATA_LOCATION as string, JSON.stringify(routes, null, 4), {
+    writeFileSync(process.env.REST_DATA_LOCATION!, JSON.stringify(routes, null, 4), {
         "encoding": "utf-8",
         "flag": "w"
     });
@@ -100,10 +104,6 @@ fastify.delete("*", (_request: FastifyRequest, reply: FastifyReply): FastifyRepl
 });
 
 // Start
-fastify.listen({ port: parseInt(process.env.REST_PORT as string) })
-    .then(() => {
-        log(`Pivot API server listening on port ${process.env.REST_PORT}`, "info");
-    }).catch((error) => {
-        fastify.log.error(error);
-        process.exit(1);
-    });
+fastify.listen({ port: parseInt(process.env.REST_PORT) })
+    .then(() => logData(`Pivot API server listening on port ${process.env.REST_PORT}`, "info"))
+    .catch((error) => logError(error));
